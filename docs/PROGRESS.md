@@ -14,7 +14,10 @@ Working checklist — updated as commits land.
 - [x] Timeline: magazine catalog, day sections, zoom transitions
 - [x] Settings + onboarding (keys, goals)
 - [x] README with setup, simulator verification checklist
-- [ ] Static review pass (swiftc -parse syntax audit of every file)
+- [x] Static review pass — all 27 Swift files parse clean under swiftc 6.0.3;
+      NutritionDB compiled + executed against Foods.json on Linux (search verified);
+      JSON/YAML validated; semantic review fixes committed (wire-role ordering,
+      lazy pager, observation-safe caches, MSL type promotion, deep-link landing)
 
 ## Known limitations / future
 

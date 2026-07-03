@@ -40,6 +40,9 @@ final class AppModel {
         let store = Store(context: container.mainContext)
         self.store = store
         self.imageEngine = FoodImageEngine(store: store)
+        // Materialize the profile row now so view bodies never insert it.
+        _ = store.profile()
+        store.save()
     }
 
     // MARK: Sessions
