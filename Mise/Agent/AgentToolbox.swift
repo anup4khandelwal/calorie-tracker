@@ -284,9 +284,13 @@ struct AgentToolbox {
             if logged { streak += 1 } else if cursor > 0 { break }
             cursor += 1
         }
-        let avg: [String: Any] = loggedDays > 0
-            ? totalsDict(MacroTotals(calories: sum.calories / Double(loggedDays), protein: sum.protein / Double(loggedDays), carbs: sum.carbs / Double(loggedDays), fat: sum.fat / Double(loggedDays)))
-            : [:]
+        let divisor = Double(max(loggedDays, 1))
+        var average = MacroTotals()
+        average.calories = sum.calories / divisor
+        average.protein = sum.protein / divisor
+        average.carbs = sum.carbs / divisor
+        average.fat = sum.fat / divisor
+        let avg: [String: Any] = loggedDays > 0 ? totalsDict(average) : [:]
         return json(["days": rows, "logged_day_count": loggedDays, "daily_average": avg, "current_streak_days": streak])
     }
 
@@ -329,12 +333,5 @@ struct AgentToolbox {
             return ToolOutcome(resultJSON: #"{"error":"serialization failed"}"#, isError: true)
         }
         return ToolOutcome(resultJSON: string, isError: false)
-    }
-}
-
-extension MacroTotals {
-    init(calories: Double, protein: Double, carbs: Double, fat: Double) {
-        self.init()
-        self.calories = calories; self.protein = protein; self.carbs = carbs; self.fat = fat
     }
 }
