@@ -1,8 +1,9 @@
 import SwiftUI
 import SwiftData
 
-/// The magazine folio at the top of each day: overline, big serif date, and
-/// the live calorie ring. Tapping it rises to the timeline.
+/// The magazine folio at the top of each day: a ruled overline, the big
+/// serif date with a live goal caption beneath, and the calorie ring.
+/// Tapping the date block rises to the timeline.
 struct DayMasthead: View {
     @Environment(AppModel.self) private var model
     let dayKey: String
@@ -15,42 +16,61 @@ struct DayMasthead: View {
     }
 
     private var consumed: Double { entries.reduce(0) { $0 + $1.calories } }
+    private var protein: Double { entries.reduce(0) { $0 + $1.protein } }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 4) {
-                Overline(text: folioLine)
-                Text(DayKey.mastheadTitle(for: dayKey))
-                    .font(Theme.masthead(30))
-                    .foregroundStyle(Theme.cream)
-            }
-            Spacer()
+        VStack(spacing: Theme.s3) {
+            FolioRule(text: folioLine)
 
-            CalorieRing(
-                consumed: consumed,
-                goal: model.store.profile().calorieGoal,
-                diameter: 54
-            )
+            HStack(alignment: .center, spacing: Theme.s4) {
+                Button {
+                    model.setZoom(out: true)
+                } label: {
+                    VStack(alignment: .leading, spacing: Theme.s1) {
+                        Text(DayKey.mastheadTitle(for: dayKey))
+                            .font(Theme.masthead(30))
+                            .foregroundStyle(Theme.cream)
+                        Text(goalCaption)
+                            .font(Theme.caption)
+                            .foregroundStyle(Theme.creamFaint)
+                            .contentTransition(.numericText())
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(Pressable(scale: 0.98))
 
-            Button {
-                model.showSettings = true
-            } label: {
-                Image(systemName: "circle.grid.2x1")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(Theme.creamDim)
-                    .frame(width: 34, height: 34)
-                    .background(Circle().fill(Theme.inkRaised))
-                    .overlay(Circle().strokeBorder(Theme.hairline, lineWidth: 1))
+                CalorieRing(
+                    consumed: consumed,
+                    goal: model.store.profile().calorieGoal,
+                    diameter: 54
+                )
+
+                Button {
+                    model.showSettings = true
+                } label: {
+                    Image(systemName: "circle.grid.2x1")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(Theme.creamDim)
+                        .frame(width: 34, height: 34)
+                        .background(Circle().fill(Theme.inkRaised))
+                        .overlay(Circle().strokeBorder(Theme.hairline, lineWidth: 1))
+                }
+                .buttonStyle(Pressable())
             }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, Theme.pagePadding)
-        .padding(.top, 8)
-        .padding(.bottom, 12)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            model.setZoom(out: true)
+        .padding(.top, Theme.s2)
+        .padding(.bottom, Theme.s3)
+    }
+
+    private var goalCaption: String {
+        let goal = Int(model.store.profile().calorieGoal)
+        let proteinGoal = Int(model.store.profile().proteinGoal)
+        if consumed <= 0 {
+            return "goal \(goal) kcal · \(proteinGoal)g protein"
         }
+        return "of \(goal) kcal · \(Int(protein.rounded())) of \(proteinGoal)g protein"
     }
 
     private var folioLine: String {

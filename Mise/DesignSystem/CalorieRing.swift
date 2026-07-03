@@ -15,6 +15,12 @@ struct CalorieRing: View {
             Circle()
                 .stroke(Theme.hairline, lineWidth: 3.5)
 
+            // Goal tick at twelve o'clock — the finish line.
+            Rectangle()
+                .fill(Theme.creamFaint)
+                .frame(width: 2, height: 6)
+                .offset(y: -diameter / 2)
+
             Circle()
                 .trim(from: 0, to: min(fraction, 1))
                 .stroke(
@@ -55,22 +61,3 @@ struct CalorieRing: View {
     }
 }
 
-/// Small colored macro readout: "P 42" with a tinted dot.
-struct MacroPill: View {
-    let label: String
-    let grams: Double
-    let color: Color
-
-    var body: some View {
-        HStack(spacing: 5) {
-            Circle().fill(color).frame(width: 5, height: 5)
-            Text(label)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Theme.creamFaint)
-            Text("\(Int(grams.rounded()))g")
-                .font(.system(size: 12, weight: .semibold, design: .serif))
-                .foregroundStyle(Theme.creamDim)
-                .contentTransition(.numericText(value: grams))
-        }
-    }
-}

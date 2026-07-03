@@ -10,13 +10,13 @@ struct UserBubbleView: View {
             Text(text)
                 .font(Theme.body)
                 .foregroundStyle(Theme.cream)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 11)
+                .padding(.horizontal, Theme.s4)
+                .padding(.vertical, Theme.s3 - 1)
                 .background {
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    RoundedRectangle(cornerRadius: Theme.rBubble, style: .continuous)
                         .fill(Theme.inkHigh)
                         .overlay {
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            RoundedRectangle(cornerRadius: Theme.rBubble, style: .continuous)
                                 .strokeBorder(Theme.hairline, lineWidth: 1)
                         }
                 }

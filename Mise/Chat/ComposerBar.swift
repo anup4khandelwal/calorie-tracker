@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// Glass composer pinned to the bottom of a thread. Suggestion chips surface
-/// on an empty day; the send jewel breathes while the agent is working.
+/// on an empty day as serif prompts; the send jewel warms when there's
+/// something to send.
 struct ComposerBar: View {
     @Environment(AppModel.self) private var model
     let session: AgentSession
@@ -18,26 +19,27 @@ struct ComposerBar: View {
     ]
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: Theme.s3) {
             if showSuggestions && draft.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: Theme.s2) {
                         ForEach(suggestions, id: \.self) { chip in
                             Button {
                                 Haptics.shared.tick()
                                 session.send(chip)
                             } label: {
                                 Text(chip)
-                                    .font(.system(size: 13, weight: .medium))
+                                    .font(.system(size: 13.5, weight: .regular, design: .serif))
+                                    .italic()
                                     .foregroundStyle(Theme.creamDim)
-                                    .padding(.horizontal, 13)
-                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, Theme.s3 + 2)
+                                    .padding(.vertical, Theme.s2)
                                     .background {
                                         Capsule().fill(Theme.inkRaised)
                                             .overlay(Capsule().strokeBorder(Theme.hairline, lineWidth: 1))
                                     }
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(Pressable())
                         }
                     }
                     .padding(.horizontal, Theme.pagePadding)
@@ -45,7 +47,7 @@ struct ComposerBar: View {
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
 
-            HStack(spacing: 10) {
+            HStack(spacing: Theme.s3) {
                 TextField("Tell me what you ate…", text: $draft, axis: .vertical)
                     .font(Theme.body)
                     .foregroundStyle(Theme.cream)
@@ -62,19 +64,19 @@ struct ComposerBar: View {
                         .background {
                             Circle().fill(canSend ? Theme.saffron : Theme.inkHigh)
                         }
-                        .shadow(color: canSend ? Theme.saffron.opacity(0.45) : .clear, radius: 8)
+                        .shadow(color: canSend ? Theme.saffron.opacity(0.4) : .clear, radius: 8)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(Pressable(scale: 0.9))
                 .disabled(!canSend)
                 .animation(Motion.snap, value: canSend)
             }
-            .padding(.leading, 18)
-            .padding(.trailing, 8)
-            .padding(.vertical, 8)
-            .glassChrome(corner: 26)
+            .padding(.leading, Theme.s4 + 2)
+            .padding(.trailing, Theme.s2)
+            .padding(.vertical, Theme.s2)
+            .glassChrome(corner: Theme.rComposer)
             .padding(.horizontal, Theme.pagePadding)
         }
-        .padding(.bottom, 8)
+        .padding(.bottom, Theme.s2)
         .animation(Motion.snap, value: draft.isEmpty)
     }
 

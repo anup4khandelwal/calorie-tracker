@@ -1,56 +1,71 @@
 import SwiftUI
 
-// SwiftUI-side wrappers for the Metal shaders in Mise.metal.
-// Time-driven effects wrap their content in TimelineView(.animation) so the
-// shader clock invalidates every frame; settled effects render statically.
+// SwiftUI wrappers for Mise.metal. Time-driven effects wrap content in a
+// TimelineView clock at the lowest frame rate that still reads as alive;
+// settled effects render statically and cost nothing.
 
 extension View {
 
-    /// Shimmering placeholder surface (colorEffect over the view's own fill).
-    func plateShimmer() -> some View {
-        modifier(PlateShimmer())
+    /// The ambient page field (apply to a full-screen Rectangle).
+    func ambientField() -> some View {
+        modifier(AmbientField())
     }
 
-    /// Film-grain develop for arriving imagery. `progress` 0→1; freezes at 1.
-    func grainReveal(progress: Double) -> some View {
-        modifier(GrainReveal(progress: progress))
+    /// Placeholder while a photo generates — breathing studio light.
+    func stillLife() -> some View {
+        modifier(StillLife())
     }
 
-    /// Refractive glass chrome. Keep `strength` small (4–10).
-    func liquidGlass(strength: Double = 6) -> some View {
-        modifier(LiquidGlass(strength: strength))
+    /// Photograph developing in. `progress` 0→1; freezes (free) at 1.
+    func filmDevelop(progress: Double) -> some View {
+        modifier(FilmDevelop(progress: progress))
     }
 
-    /// Radial wobble tied to the zoom transition. 0 and 1 are rest states.
+    /// Procedural smoked-glass chrome. `cornerRadius` must match the shape.
+    func glassRim(cornerRadius: Double) -> some View {
+        modifier(GlassRim(cornerRadius: cornerRadius))
+    }
+
+    /// Surface-tension wobble during the zoom. Rest states are free.
     func zoomRipple(progress: Double) -> some View {
         modifier(ZoomRipple(progress: progress))
     }
-
-    /// Subtle rising warmth over hero imagery.
-    func heatHaze() -> some View {
-        modifier(HeatHaze())
-    }
 }
 
-/// Shared clock value for shader uniforms — bounded so float precision stays fine.
+/// Bounded clock so float precision in the shader stays clean.
 private func shaderTime(_ date: Date) -> Double {
     date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 10_000)
 }
 
-private struct PlateShimmer: ViewModifier {
+private struct AmbientField: ViewModifier {
     func body(content: Content) -> some View {
-        TimelineView(.animation) { context in
+        // The glow drifts over tens of seconds — 10fps is indistinguishable
+        // from continuous here and keeps the GPU asleep most of the time.
+        TimelineView(.animation(minimumInterval: 1.0 / 10.0)) { context in
             let t = shaderTime(context.date)
             content.visualEffect { view, proxy in
                 view.colorEffect(
-                    ShaderLibrary.plateShimmer(.float2(proxy.size), .float(t))
+                    ShaderLibrary.ambientField(.float2(proxy.size), .float(t))
                 )
             }
         }
     }
 }
 
-private struct GrainReveal: ViewModifier {
+private struct StillLife: ViewModifier {
+    func body(content: Content) -> some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { context in
+            let t = shaderTime(context.date)
+            content.visualEffect { view, proxy in
+                view.colorEffect(
+                    ShaderLibrary.stillLife(.float2(proxy.size), .float(t))
+                )
+            }
+        }
+    }
+}
+
+private struct FilmDevelop: ViewModifier {
     var progress: Double
     func body(content: Content) -> some View {
         if progress >= 1 {
@@ -60,10 +75,10 @@ private struct GrainReveal: ViewModifier {
                 let t = shaderTime(context.date)
                 content.visualEffect { view, proxy in
                     view.layerEffect(
-                        ShaderLibrary.grainReveal(
+                        ShaderLibrary.filmDevelop(
                             .float2(proxy.size), .float(progress), .float(t)
                         ),
-                        maxSampleOffset: .zero
+                        maxSampleOffset: CGSize(width: 6, height: 6)
                     )
                 }
             }
@@ -71,17 +86,17 @@ private struct GrainReveal: ViewModifier {
     }
 }
 
-private struct LiquidGlass: ViewModifier {
-    var strength: Double
+private struct GlassRim: ViewModifier {
+    var cornerRadius: Double
     func body(content: Content) -> some View {
-        TimelineView(.animation) { context in
+        // The rim light drifts slowly; the gleam crosses every ~22s.
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
             let t = shaderTime(context.date)
             content.visualEffect { view, proxy in
-                view.layerEffect(
-                    ShaderLibrary.liquidGlass(
-                        .float2(proxy.size), .float(t), .float(strength)
-                    ),
-                    maxSampleOffset: CGSize(width: strength, height: strength)
+                view.colorEffect(
+                    ShaderLibrary.glassRim(
+                        .float2(proxy.size), .float(t), .float(cornerRadius)
+                    )
                 )
             }
         }
@@ -97,21 +112,7 @@ private struct ZoomRipple: ViewModifier {
             content.visualEffect { view, proxy in
                 view.distortionEffect(
                     ShaderLibrary.zoomRipple(.float2(proxy.size), .float(progress)),
-                    maxSampleOffset: CGSize(width: 10, height: 10)
-                )
-            }
-        }
-    }
-}
-
-private struct HeatHaze: ViewModifier {
-    func body(content: Content) -> some View {
-        TimelineView(.animation) { context in
-            let t = shaderTime(context.date)
-            content.visualEffect { view, proxy in
-                view.layerEffect(
-                    ShaderLibrary.heatHaze(.float2(proxy.size), .float(t)),
-                    maxSampleOffset: CGSize(width: 3, height: 3)
+                    maxSampleOffset: CGSize(width: 4, height: 4)
                 )
             }
         }

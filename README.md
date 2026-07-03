@@ -40,13 +40,22 @@ Keys live in the iOS Keychain only.
 
 ## What to look at
 
+- **Every shader was audited frame-by-frame before shipping** — `tools/frameaudit/`
+  ports the exact Metal math to numpy, renders labeled frame sequences and contact
+  sheets, and the constants were tuned against those renders. (This pass caught the
+  zoom sampling out-of-bounds at all four edges, a develop effect that read as mold,
+  and a skeleton-loader shimmer — all replaced.)
+- **The material system** — the page is a shader-drawn candlelit field (no stock
+  gradients), chrome is procedural smoked glass (SDF rim light under a slowly drifting
+  source, traveling edge gleam), and photographs *develop* like prints: present from
+  frame one, highlights first, focus resolving, silver grain dissolving.
+- **The zoom** — the thread lifts off as a physical page: corners round, a two-layer
+  shadow grows, it recedes crisply at 0.84× while the timeline settles beneath with
+  parallax. One raw progress, per-layer easing, fully interruptible, never blurred.
+- **Typography discipline** — 4pt spacing grid, nested corner radii, baseline-aligned
+  serif numerals, folio rules, every text pair ≥ 4:1 contrast (WCAG-audited).
 - **Streaming text** — agent replies *condense* onto the page (per-glyph blur + rise via
   a custom iOS 18 `TextRenderer`), not teletype.
-- **Shaders** (`Mise/Shaders/Mise.metal`) — film-grain image develop, refractive glass
-  chrome on the composer, a radial ripple during the zoom, shimmering plate placeholders,
-  heat haze on hero imagery. Ambient background is an animated `MeshGradient`.
-- **The zoom** — pinch is fully interactive and interruptible; thresholds are asymmetric
-  so the current state feels slightly sticky, and commitment lands with a rigid haptic.
 - **The agent** — tool-use loop over the Messages API (SSE), grounded by a bundled
   nutrition DB, with cheeky activity lines ("plating it…", "checking the pantry…").
 

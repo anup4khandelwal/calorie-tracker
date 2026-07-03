@@ -72,15 +72,27 @@ generated photography.
 
 ## Shaders (`Mise/Shaders/Mise.metal`)
 
+Every shader is developed against `tools/frameaudit/` — numpy ports of the
+exact same math render labeled frame sequences, which get inspected and tuned
+*before* the constants are committed to Metal. Change the Python first, look
+at the frames, then port back.
+
 | shader | type | used for |
 |---|---|---|
-| `plateShimmer` | colorEffect | placeholder while images generate |
-| `grainReveal` | layerEffect | film-grain dissolve when an image lands |
-| `liquidGlass` | layerEffect | lensing/refraction on the composer + masthead chrome |
-| `zoomRipple` | distortionEffect | thread ↔ timeline transition wobble |
-| `heatHaze` | layerEffect | subtle idle life on the hero card |
+| `ambientField` | colorEffect | the page: near-black warm field, drifting candle glow, vignette, paper grain (replaced MeshGradient) |
+| `stillLife` | colorEffect | placeholder while photos generate — breathing key light, no skeleton bands |
+| `filmDevelop` | layerEffect | photographs developing in: present from frame one as a dark print, highlights first, soft→sharp, dissolving silver grain |
+| `glassRim` | colorEffect | procedural smoked glass: SDF rounded-rect rim specular under a drifting light, top sheen, inner shadow, traveling edge gleam |
+| `zoomRipple` | distortionEffect | surface tension during the zoom — edge-attenuated so it can never sample outside the layer |
 
-Plus native `MeshGradient` (animated by `TimelineView`) as the ambient background.
+## The zoom (floating page)
+
+One raw progress drives the transition; each layer runs its own easing
+(`Motion.easeOutCubic` / `easeInOut` / `window`) so the choreography reads
+layered: the thread lifts off as a physical page (corners round to 44pt, a
+two-layer shadow grows, it recedes to 0.84× — never blurred), while the
+timeline settles beneath with 12pt of parallax. Interactive, interruptible,
+asymmetric commit thresholds, rigid haptic on commit.
 
 ## Data model (SwiftData)
 

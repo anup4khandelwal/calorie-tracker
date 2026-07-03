@@ -2,6 +2,25 @@
 
 Working checklist — updated as commits land.
 
+## Phase 2 — design overhaul ("cook hard")
+
+- [x] Pixel-audit harness (`tools/frameaudit/`): numpy ports of all shader
+      math, frame sequences rendered + visually inspected, WCAG report
+- [x] Findings fixed: zoomRipple sampled out-of-bounds at all four edges
+      (smearing); grainReveal read as mold mid-develop; plateShimmer was a
+      skeleton-loader band; liquidGlass refraction was a no-op (sampled its
+      own flat fill); creamFaint failed AA at 2.92:1
+- [x] Shader suite v2: ambientField (replaces MeshGradient), stillLife,
+      filmDevelop, glassRim (SDF procedural glass), edge-safe zoomRipple
+- [x] Floating-page zoom choreography (no full-screen blur; per-layer easing)
+- [x] Component redesign: 4pt spacing grid + radii tokens, Pressable button
+      style, matted entry cards with macro meters + baseline-aligned numerals,
+      folio-ruled masthead + timeline headers, staggered tile arrivals
+- [x] App icon rendered from the same ambient math (eclipse ring, goal tick)
+- [x] All Swift re-parsed clean; docs updated
+
+## Phase 1 — build
+
 - [x] Branch + scaffold (project.yml, docs, gitignore)
 - [x] Design system: theme, typography, haptics, motion springs
 - [x] Metal shaders + SwiftUI wrappers

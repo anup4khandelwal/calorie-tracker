@@ -1,8 +1,10 @@
 import SwiftUI
 import SwiftData
 
-/// The zoomed-out record: every meal ever logged, as one continuous magazine
-/// catalog. Days become spreads; meals become plates on the page.
+/// The zoomed-out record: every meal ever logged as one continuous magazine
+/// catalog. Days are spreads with ruled headers; meals are plates on the
+/// page, arriving with a slight stagger so scrolling feels typeset, not
+/// dumped.
 struct TimelineCatalogView: View {
     @Environment(AppModel.self) private var model
 
@@ -17,13 +19,13 @@ struct TimelineCatalogView: View {
     }
 
     private let columns = [
-        GridItem(.flexible(), spacing: 14),
-        GridItem(.flexible(), spacing: 14),
+        GridItem(.flexible(), spacing: Theme.s3 + 2),
+        GridItem(.flexible(), spacing: Theme.s3 + 2),
     ]
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 30, pinnedViews: []) {
+            LazyVStack(alignment: .leading, spacing: Theme.s8, pinnedViews: []) {
                 header
 
                 if sections.isEmpty {
@@ -43,52 +45,58 @@ struct TimelineCatalogView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Overline(text: "MISE · THE RECORD")
+        VStack(alignment: .leading, spacing: Theme.s3) {
+            FolioRule(text: "MISE · THE RECORD")
             Text("Everything\nyou've plated")
-                .font(Theme.masthead(40))
+                .font(Theme.masthead(38))
                 .foregroundStyle(Theme.cream)
-                .lineSpacing(-2)
+                .lineSpacing(-1)
         }
-        .padding(.top, 24)
-        .padding(.bottom, 6)
+        .padding(.top, Theme.s6)
     }
 
     private func daySection(_ dayKey: String, entries: [FoodEntry]) -> some View {
         let total = entries.reduce(0.0) { $0 + $1.calories }
-        return VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(DayKey.shortTitle(for: dayKey))
-                    .font(.system(size: 19, weight: .medium, design: .serif))
-                    .foregroundStyle(Theme.cream)
-                Spacer()
-                Text("\(Int(total.rounded()))")
-                    .font(Theme.stat(19))
-                    .foregroundStyle(Theme.saffron)
-                Text("KCAL")
-                    .font(.system(size: 9, weight: .semibold))
-                    .kerning(1.2)
-                    .foregroundStyle(Theme.creamFaint)
-            }
-            .contentShape(Rectangle())
-            .onTapGesture {
+        return VStack(alignment: .leading, spacing: Theme.s4) {
+            Button {
                 model.open(dayKey: dayKey)
+            } label: {
+                HStack(alignment: .firstTextBaseline, spacing: Theme.s2) {
+                    Text(DayKey.shortTitle(for: dayKey))
+                        .font(.system(size: 19, weight: .medium, design: .serif))
+                        .foregroundStyle(Theme.cream)
+                    Rectangle()
+                        .fill(Theme.hairline)
+                        .frame(height: 1)
+                        .offset(y: -4)
+                    Text("\(Int(total.rounded()))")
+                        .font(Theme.stat(19))
+                        .foregroundStyle(Theme.saffron)
+                    Text("KCAL")
+                        .font(.system(size: 9, weight: .semibold))
+                        .kerning(1.2)
+                        .foregroundStyle(Theme.creamFaint)
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(Pressable(scale: 0.99))
 
-            LazyVGrid(columns: columns, spacing: 14) {
-                ForEach(entries, id: \.id) { entry in
-                    MealCard(entry: entry)
-                        .onTapGesture {
-                            Haptics.shared.tick()
-                            model.open(dayKey: dayKey, entryID: entry.id)
-                        }
+            LazyVGrid(columns: columns, spacing: Theme.s3 + 2) {
+                ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
+                    Button {
+                        Haptics.shared.tick()
+                        model.open(dayKey: dayKey, entryID: entry.id)
+                    } label: {
+                        MealCard(entry: entry, staggerIndex: index)
+                    }
+                    .buttonStyle(Pressable(scale: 0.96))
                 }
             }
         }
     }
 
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Theme.s3) {
             Text("Nothing plated yet.")
                 .font(.system(size: 20, weight: .medium, design: .serif))
                 .foregroundStyle(Theme.creamDim)
@@ -104,28 +112,31 @@ struct TimelineCatalogView: View {
         Button {
             model.setZoom(out: false)
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: Theme.s2) {
                 Image(systemName: "arrow.down.right.and.arrow.up.left")
                     .font(.system(size: 12, weight: .semibold))
                 Text(DayKey.mastheadTitle(for: model.currentDayKey))
                     .font(.system(size: 14, weight: .semibold, design: .serif))
             }
             .foregroundStyle(Theme.cream)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 12)
+            .padding(.horizontal, Theme.s4 + 2)
+            .padding(.vertical, Theme.s3)
             .glassChrome(corner: 24)
         }
-        .buttonStyle(.plain)
-        .padding(.bottom, 12)
+        .buttonStyle(Pressable())
+        .padding(.bottom, Theme.s3)
     }
 }
 
-/// One plate in the catalog: the studio image (or emoji plate), a soft title
-/// gradient, and the calorie folio.
+/// One plate in the catalog: the photograph (or emoji plate), a soft title
+/// gradient, and the calorie folio. Arrives with a small stagger.
 struct MealCard: View {
     @Environment(AppModel.self) private var model
     let entry: FoodEntry
-    @State private var revealProgress: Double = 0
+    var staggerIndex: Int = 0
+
+    @State private var developProgress: Double = 0
+    @State private var appeared = false
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
@@ -141,27 +152,32 @@ struct MealCard: View {
                     .font(.system(size: 14, weight: .medium, design: .serif))
                     .foregroundStyle(Theme.cream)
                     .lineLimit(1)
-                HStack(spacing: 4) {
+                HStack(spacing: Theme.s1) {
                     Text("\(Int(entry.calories.rounded()))")
                         .font(Theme.statSmall(13))
                         .foregroundStyle(Theme.saffron)
                     Text("KCAL · \(entry.meal.label.uppercased())")
                         .font(.system(size: 8.5, weight: .semibold))
                         .kerning(1)
-                        .foregroundStyle(Theme.creamFaint)
+                        .foregroundStyle(Theme.cream.opacity(0.55))
                 }
             }
-            .padding(12)
+            .padding(Theme.s3)
         }
-        .aspectRatio(1, contentMode: .fit) // square card; overflowing photo clips below
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .aspectRatio(1, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.rTile, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.rTile, style: .continuous)
                 .strokeBorder(Theme.hairline, lineWidth: 1)
         }
+        .scaleEffect(appeared ? 1 : 0.94)
+        .opacity(appeared ? 1 : 0)
         .onAppear {
+            withAnimation(Motion.arrive.delay(Double(staggerIndex % 6) * 0.045)) {
+                appeared = true
+            }
             model.imageEngine.ensure(entry)
-            if model.imageEngine.image(for: entry) != nil { revealProgress = 1 }
+            if model.imageEngine.image(for: entry) != nil { developProgress = 1 }
         }
     }
 
@@ -174,10 +190,10 @@ struct MealCard: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .grainReveal(progress: revealProgress)
+                    .filmDevelop(progress: developProgress)
                     .onAppear {
-                        if revealProgress < 1 {
-                            withAnimation(.easeInOut(duration: 1.2)) { revealProgress = 1 }
+                        if developProgress < 1 {
+                            withAnimation(.easeInOut(duration: 1.3)) { developProgress = 1 }
                         }
                     }
             } else {

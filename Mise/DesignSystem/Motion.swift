@@ -13,6 +13,25 @@ enum Motion {
     static let zoom = Animation.spring(response: 0.55, dampingFraction: 0.82)
     /// Playful bounce for the calorie ring and reactions.
     static let bounce = Animation.spring(response: 0.42, dampingFraction: 0.58)
+
+    // MARK: Curve shaping for the interactive zoom.
+    // One raw progress drives several layers; each gets its own easing so
+    // the choreography reads layered instead of linear.
+
+    static func easeOutCubic(_ x: Double) -> Double {
+        let c = min(max(x, 0), 1)
+        return 1 - pow(1 - c, 3)
+    }
+
+    static func easeInOut(_ x: Double) -> Double {
+        let c = min(max(x, 0), 1)
+        return c * c * (3 - 2 * c)
+    }
+
+    /// smoothstep between two thresholds of the raw progress.
+    static func window(_ x: Double, _ from: Double, _ to: Double) -> Double {
+        easeInOut((x - from) / max(to - from, 0.0001))
+    }
 }
 
 /// One shared haptics brain. Cheap taps use UIKit generators; signature moments

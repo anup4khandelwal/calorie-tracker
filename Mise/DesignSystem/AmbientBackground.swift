@@ -1,64 +1,52 @@
 import SwiftUI
 
-/// The living page: a barely-moving warm mesh gradient under everything.
-/// Motion is slow enough to read as candlelight, not animation.
+/// The page everything sits on — a shader-drawn near-black warm field with a
+/// drifting candle glow, vignette, and paper grain. (Frame-audited: reads as
+/// lit paper, never as a gradient poster.)
 struct AmbientBackground: View {
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { context in
-            let t = context.date.timeIntervalSinceReferenceDate
-            let drift = Float(sin(t * 0.11)) * 0.06
-            let drift2 = Float(cos(t * 0.07)) * 0.05
-
-            MeshGradient(
-                width: 3,
-                height: 3,
-                points: [
-                    [0, 0], [0.5, 0], [1, 0],
-                    [0, 0.5], [0.5 + drift, 0.45 + drift2], [1, 0.5],
-                    [0, 1], [0.5, 1], [1, 1],
-                ],
-                colors: [
-                    Theme.ink, Theme.ink, Color(hex: 0x181310),
-                    Color(hex: 0x171310), Color(hex: 0x201812), Theme.ink,
-                    Theme.ink, Color(hex: 0x191410), Theme.ink,
-                ]
-            )
-        }
-        .ignoresSafeArea()
+        Rectangle()
+            .fill(Theme.ink)
+            .ambientField()
+            .ignoresSafeArea()
     }
 }
 
-/// Standard chrome slab: raised ink, hairline, soft shadow, glass refraction.
+/// Chrome slab: real material blur, warm ink tint, then the procedural
+/// glass pass (rim light, sheen, inner shadow, traveling gleam).
 struct GlassChrome: ViewModifier {
-    var corner: CGFloat = Theme.corner
+    var corner: CGFloat = Theme.rComposer
     func body(content: Content) -> some View {
         content
             .background {
                 RoundedRectangle(cornerRadius: corner, style: .continuous)
                     .fill(.ultraThinMaterial)
                     .overlay {
-                        // Warm ink tint over the blur so the glass reads Mise, not iOS.
                         RoundedRectangle(cornerRadius: corner, style: .continuous)
                             .fill(Theme.inkRaised.opacity(0.72))
                     }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: corner, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [Theme.cream.opacity(0.16), Theme.cream.opacity(0.03)],
-                                    startPoint: .top, endPoint: .bottom
-                                ),
-                                lineWidth: 1
-                            )
-                    }
-                    .liquidGlass(strength: 5)
-                    .shadow(color: .black.opacity(0.35), radius: 18, y: 8)
+                    .glassRim(cornerRadius: corner)
+                    .compositingGroup()
+                    .shadow(color: .black.opacity(0.30), radius: 16, y: 7)
+                    .shadow(color: .black.opacity(0.18), radius: 2, y: 1)
             }
     }
 }
 
 extension View {
-    func glassChrome(corner: CGFloat = Theme.corner) -> some View {
+    func glassChrome(corner: CGFloat = Theme.rComposer) -> some View {
         modifier(GlassChrome(corner: corner))
+    }
+}
+
+/// The one press behavior every tappable surface shares: a quick settle
+/// inward with a whisper of dimming — never a color flash.
+struct Pressable: ButtonStyle {
+    var scale: CGFloat = 0.965
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scale : 1)
+            .brightness(configuration.isPressed ? -0.04 : 0)
+            .animation(.spring(response: 0.28, dampingFraction: 0.8), value: configuration.isPressed)
     }
 }
