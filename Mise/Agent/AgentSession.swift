@@ -189,7 +189,13 @@ final class AgentSession {
     private func historyWireMessages() -> [[String: Any]] {
         guard let day = store.day(for: dayKey, createIfMissing: false) else { return [] }
         var wire: [[String: Any]] = []
+        // The API requires the first message to be role "user" — a fresh day
+        // starts with our local greeting, so leading agent messages are folded
+        // out (the greeting carries no information the model needs).
+        var seenUser = false
         for message in day.sortedMessages {
+            if message.role == .agent && !seenUser { continue }
+            if message.role == .user { seenUser = true }
             let role = message.role == .user ? "user" : "assistant"
             var text = message.text
             if !message.entryIDs.isEmpty {

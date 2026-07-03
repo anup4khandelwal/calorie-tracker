@@ -63,14 +63,15 @@ struct DayThreadView: View {
                     proxy.scrollTo("thread-bottom", anchor: .bottom)
                 }
                 .onChange(of: model.pendingScrollEntryID) { _, target in
-                    guard target != nil, model.currentDayKey == dayKey else { return }
-                    // Land on the message that carries the requested entry.
-                    if let message = messages.first(where: { $0.entryIDs.contains(where: { $0 == target }) }) {
-                        withAnimation(Motion.zoom) {
-                            proxy.scrollTo(message.id, anchor: .center)
-                        }
-                    }
-                    model.pendingScrollEntryID = nil
+                    landOnEntry(target, proxy: proxy)
+                }
+                .task {
+                    // A timeline dive can set the target *before* this thread
+                    // mounts — onChange never fires then, so check on arrival
+                    // (after the zoom has mostly settled).
+                    guard model.pendingScrollEntryID != nil else { return }
+                    try? await Task.sleep(for: .milliseconds(380))
+                    landOnEntry(model.pendingScrollEntryID, proxy: proxy)
                 }
             }
 
@@ -82,5 +83,16 @@ struct DayThreadView: View {
         .onAppear {
             session.openIfNeeded()
         }
+    }
+
+    /// Scroll to (and clear) the entry the timeline asked us to land on.
+    private func landOnEntry(_ target: UUID?, proxy: ScrollViewProxy) {
+        guard let target, model.currentDayKey == dayKey else { return }
+        if let message = messages.first(where: { $0.entryIDs.contains(target) }) {
+            withAnimation(Motion.zoom) {
+                proxy.scrollTo(message.id, anchor: .center)
+            }
+        }
+        model.pendingScrollEntryID = nil
     }
 }

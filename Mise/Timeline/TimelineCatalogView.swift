@@ -130,7 +130,6 @@ struct MealCard: View {
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             imagery
-                .aspectRatio(1, contentMode: .fill)
 
             LinearGradient(
                 colors: [.clear, .clear, .black.opacity(0.72)],
@@ -154,6 +153,7 @@ struct MealCard: View {
             }
             .padding(12)
         }
+        .aspectRatio(1, contentMode: .fit) // square card; overflowing photo clips below
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 20, style: .continuous)

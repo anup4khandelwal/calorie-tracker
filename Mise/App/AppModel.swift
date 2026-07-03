@@ -25,7 +25,9 @@ final class AppModel {
 
     var showSettings = false
 
-    private var sessions: [String: AgentSession] = [:]
+    /// Session cache — ignored by observation so lazily creating a session
+    /// inside a view body doesn't invalidate that same body.
+    @ObservationIgnored private var sessions: [String: AgentSession] = [:]
 
     init() {
         do {

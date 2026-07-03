@@ -35,8 +35,12 @@ struct GlassChrome: ViewModifier {
         content
             .background {
                 RoundedRectangle(cornerRadius: corner, style: .continuous)
-                    .fill(Theme.inkRaised.opacity(0.92))
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: corner, style: .continuous))
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        // Warm ink tint over the blur so the glass reads Mise, not iOS.
+                        RoundedRectangle(cornerRadius: corner, style: .continuous)
+                            .fill(Theme.inkRaised.opacity(0.72))
+                    }
                     .overlay {
                         RoundedRectangle(cornerRadius: corner, style: .continuous)
                             .strokeBorder(

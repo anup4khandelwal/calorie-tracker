@@ -55,7 +55,8 @@ static float vnoise(float2 p) {
     // Undeveloped regions show a warm dark emulsion with sparkle.
     half3 emulsion = half3(0.10, 0.088, 0.07) + half3(grain * 0.05);
     // Developed-but-fresh pixels bloom slightly warm, settling as p -> 1.
-    half3 fresh = px.rgb * (1.0 + (1.0 - p) * 0.18 * half3(1.05, 1.0, 0.9));
+    half boost = half((1.0 - p) * 0.18);
+    half3 fresh = px.rgb * (half3(1.0) + boost * half3(1.05, 1.0, 0.9));
     half3 rgb = mix(emulsion, fresh, visible);
     return half4(rgb, px.a);
 }

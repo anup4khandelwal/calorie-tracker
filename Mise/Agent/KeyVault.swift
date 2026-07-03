@@ -50,6 +50,6 @@ enum KeyVault {
         SecItemDelete(query as CFDictionary)
     }
 
-    static var hasAnthropicKey: Bool { get(.anthropic) != nil }
-    static var hasGeminiKey: Bool { get(.gemini) != nil }
+    static var hasAnthropicKey: Bool { Self.get(.anthropic) != nil }
+    static var hasGeminiKey: Bool { Self.get(.gemini) != nil }
 }

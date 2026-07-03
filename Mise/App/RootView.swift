@@ -31,7 +31,7 @@ struct RootView: View {
                 .zoomRipple(progress: p)
                 .allowsHitTesting(!model.zoomedOut)
         }
-        .gesture(zoomPinch)
+        .simultaneousGesture(zoomPinch) // must coexist with scrolls + pager swipes
         .sheet(isPresented: Binding(
             get: { model.showSettings },
             set: { model.showSettings = $0 }
