@@ -15,8 +15,9 @@ generated photography.
 │  │           ├── EntryCardView (generated food imagery)      │
 │  │           ├── StreamingTextView (custom TextRenderer)     │
 │  │           └── ComposerBar                                 │
-│  └── TimelineView            ← zoomed-out magazine catalog   │
-│        └── MealCard grid, grouped by day                     │
+│  └── TimelineCatalogView     ← zoomed-out plate catalog      │
+│        └── PlateTile grid (cutout plates, no boxes)          │
+│  └── HeroFlightLayer         ← plate flying grid ↔ thread    │
 └──────────────────────────────────────────────────────────────┘
         AppModel (@Observable, owns zoom state + services)
         ├── AgentSession (per-day agentic loop)
@@ -63,12 +64,27 @@ generated photography.
 
 ## Imagery pipeline
 
-`FoodImageEngine.image(for: FoodEntry)`:
-1. Normalize the food name → cache key (SHA256) → check disk (`Application Support/FoodImages`).
-2. Miss → `generateContent` on `gemini-3.1-flash-image` (fallback `gemini-2.5-flash-image`)
-   with the locked *Mise shoot* style prompt; decode inline base64 PNG; store.
-3. UI shows a shimmering ceramic-plate placeholder (Metal shimmer), then the real image
-   arrives via a grain-dissolve `colorEffect`.
+`FoodImageEngine.ensure(entry)` — provider chain, best plate first:
+1. Normalize the food name → cache key (SHA256, `-v2.png`) → check disk
+   (`Application Support/FoodImages`, PNG so alpha survives).
+2. Miss → **OpenAI Images** (`gpt-image-1-mini` → `gpt-image-1`) with
+   `background: "transparent"` — a true alpha **cutout plate** that floats on
+   Mise's own surfaces with a real drop shadow.
+3. No OpenAI key / failure → **Gemini** (`gemini-3.1-flash-image` →
+   `gemini-2.5-flash-image`), opaque square, rendered circle-cropped so it
+   still reads as a plate.
+4. Neither → the emoji-on-ceramic plate.
+`FoodImageEngine.isCutout(_:)` (alpha-channel check) drives which rendering
+every view uses. All arrivals develop in through the `filmDevelop` shader.
+
+## The hero flight (grid → thread)
+
+Tapping a plate in the catalog launches `HeroFlightLayer`: the tile's global
+frame is captured via `onGeometryChange`, the grid copy hides, and an overlay
+plate flies on the zoom's own spring to the exact rect where the entry card's
+photograph lands (the thread scrolls the entry to center in parallel), then
+fades through into the real card. Screen-space rect interpolation — no
+navigation transitions, no matched-geometry containers.
 
 ## Shaders (`Mise/Shaders/Mise.metal`)
 

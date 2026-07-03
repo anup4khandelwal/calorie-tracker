@@ -18,8 +18,7 @@ struct EntryCardView: View {
             imagery
                 .frame(maxWidth: .infinity)
                 .aspectRatio(1, contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: Theme.rImage, style: .continuous))
-                .padding(Theme.s1) // the mat
+                .padding(Theme.s1)
 
             VStack(alignment: .leading, spacing: Theme.s2) {
                 HStack {
@@ -105,22 +104,34 @@ struct EntryCardView: View {
         entry.createdAt.formatted(date: .omitted, time: .shortened)
     }
 
+    /// Cutout plates float free on the card with a real shadow; opaque
+    /// photographs stay matted (clipped, inset) like a mounted print.
     @ViewBuilder
     private var imagery: some View {
         let image = model.imageEngine.image(for: entry)
         ZStack {
             if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .filmDevelop(progress: developProgress)
-                    .onAppear {
-                        if developProgress < 1 {
-                            withAnimation(.easeInOut(duration: 1.6)) { developProgress = 1 }
-                        }
-                    }
+                if FoodImageEngine.isCutout(image) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .filmDevelop(progress: developProgress)
+                        .shadow(color: .black.opacity(0.50), radius: 18, y: 12)
+                        .shadow(color: .black.opacity(0.22), radius: 4, y: 2)
+                        .padding(Theme.s3)
+                        .onAppear(perform: revealIfNeeded)
+                } else {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .aspectRatio(1, contentMode: .fit)
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.rImage, style: .continuous))
+                        .filmDevelop(progress: developProgress)
+                        .onAppear(perform: revealIfNeeded)
+                }
             } else {
                 placeholderPlate
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.rImage, style: .continuous))
             }
         }
         .onChange(of: image == nil) { wasNil, isNil in
@@ -128,6 +139,12 @@ struct EntryCardView: View {
                 developProgress = 0
                 withAnimation(.easeInOut(duration: 1.6)) { developProgress = 1 }
             }
+        }
+    }
+
+    private func revealIfNeeded() {
+        if developProgress < 1 {
+            withAnimation(.easeInOut(duration: 1.6)) { developProgress = 1 }
         }
     }
 

@@ -5,6 +5,7 @@ import Security
 enum KeyVault {
     enum Key: String, CaseIterable {
         case anthropic = "anthropic-api-key"
+        case openai = "openai-api-key"
         case gemini = "gemini-api-key"
     }
 
@@ -51,5 +52,6 @@ enum KeyVault {
     }
 
     static var hasAnthropicKey: Bool { Self.get(.anthropic) != nil }
+    static var hasOpenAIKey: Bool { Self.get(.openai) != nil }
     static var hasGeminiKey: Bool { Self.get(.gemini) != nil }
 }

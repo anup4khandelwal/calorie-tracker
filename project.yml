@@ -1,7 +1,7 @@
 # XcodeGen manifest — run `xcodegen generate` (brew install xcodegen) to produce Mise.xcodeproj.
 name: Mise
 options:
-  bundleIdPrefix: com.mise
+  bundleIdPrefix: com.anup4khandelwal
   deploymentTarget:
     iOS: "18.0"
   createIntermediateGroups: true
@@ -20,7 +20,7 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
-        PRODUCT_BUNDLE_IDENTIFIER: com.mise.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.anup4khandelwal.mise
         INFOPLIST_KEY_CFBundleDisplayName: Mise
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark

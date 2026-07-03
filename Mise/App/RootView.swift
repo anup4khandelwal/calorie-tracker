@@ -50,6 +50,12 @@ struct RootView: View {
             .zoomRipple(progress: p)
             .opacity(1 - Motion.window(p, 0.72, 1.0))
             .allowsHitTesting(!model.zoomedOut)
+
+            // A plate mid-flight between grid and thread rides above both.
+            if let flight = model.heroFlight {
+                HeroFlightLayer(flight: flight)
+                    .id(flight.id)
+            }
         }
         .simultaneousGesture(zoomPinch) // must coexist with scrolls + pager swipes
         .sheet(isPresented: Binding(
