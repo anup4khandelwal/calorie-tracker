@@ -2,6 +2,17 @@ import SwiftUI
 import SwiftData
 import Observation
 
+/// A plate mid-flight between the catalog grid and its entry card in the
+/// thread — the shared element of the dive transition.
+struct HeroFlight: Identifiable {
+    let id = UUID()
+    let entryID: UUID
+    let image: UIImage?
+    let emoji: String
+    /// Source frame of the tapped tile, in global (screen) coordinates.
+    let from: CGRect
+}
+
 /// App-wide state: the model container, per-day agent sessions, the image
 /// engine, and the thread ↔ timeline zoom choreography.
 @MainActor
@@ -22,6 +33,8 @@ final class AppModel {
     var zoomedOut = false
     /// Entry the timeline wants the thread to scroll to after diving in.
     var pendingScrollEntryID: UUID?
+    /// The plate currently flying between grid and thread, if any.
+    var heroFlight: HeroFlight?
 
     var showSettings = false
 
@@ -94,10 +107,14 @@ final class AppModel {
         withAnimation(Motion.zoom) { zoomProgress = out ? 1 : 0 }
     }
 
-    /// Timeline → dive into a day (optionally landing on an entry).
-    func open(dayKey: String, entryID: UUID? = nil) {
+    /// Timeline → dive into a day (optionally landing on an entry, optionally
+    /// carrying the tapped plate across the transition as a hero).
+    func open(dayKey: String, entryID: UUID? = nil, hero: HeroFlight? = nil) {
         currentDayKey = dayKey
         pendingScrollEntryID = entryID
+        if let hero, !hero.from.isEmpty {
+            heroFlight = hero
+        }
         setZoom(out: false)
     }
 }

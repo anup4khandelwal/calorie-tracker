@@ -9,6 +9,7 @@ struct OnboardingView: View {
     @State private var calorieGoal = 2200.0
     @State private var proteinGoal = 120.0
     @State private var anthropicKey = ""
+    @State private var openAIKey = ""
     @State private var geminiKey = ""
 
     private var canStart: Bool {
@@ -46,7 +47,10 @@ struct OnboardingView: View {
                         LabeledField(label: "Anthropic API key", hint: "Required — the conversation runs on Claude. console.anthropic.com") {
                             SecureField("sk-ant-…", text: $anthropicKey)
                         }
-                        LabeledField(label: "Gemini API key", hint: "Optional — turns your meals into studio photography. aistudio.google.com") {
+                        LabeledField(label: "OpenAI API key", hint: "Recommended — cutout plate photography with real transparency. platform.openai.com") {
+                            SecureField("sk-…", text: $openAIKey)
+                        }
+                        LabeledField(label: "Gemini API key", hint: "Optional fallback photography. aistudio.google.com") {
                             SecureField("AIza…", text: $geminiKey)
                         }
                     }
@@ -82,6 +86,7 @@ struct OnboardingView: View {
         profile.onboarded = true
         model.store.save()
         KeyVault.set(anthropicKey, for: .anthropic)
+        KeyVault.set(openAIKey, for: .openai)
         KeyVault.set(geminiKey, for: .gemini)
         Haptics.shared.plated()
         dismiss()

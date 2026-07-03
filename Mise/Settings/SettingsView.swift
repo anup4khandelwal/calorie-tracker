@@ -9,6 +9,7 @@ struct SettingsView: View {
     @State private var calorieGoal = 2200.0
     @State private var proteinGoal = 120.0
     @State private var anthropicKey = ""
+    @State private var openAIKey = ""
     @State private var geminiKey = ""
 
     var body: some View {
@@ -28,7 +29,10 @@ struct SettingsView: View {
                         LabeledField(label: "Anthropic API key", hint: "Powers the conversation — console.anthropic.com") {
                             SecureField("sk-ant-…", text: $anthropicKey)
                         }
-                        LabeledField(label: "Gemini API key", hint: "Powers the food photography — aistudio.google.com (optional)") {
+                        LabeledField(label: "OpenAI API key", hint: "Cutout plates with real transparency — platform.openai.com (recommended)") {
+                            SecureField("sk-…", text: $openAIKey)
+                        }
+                        LabeledField(label: "Gemini API key", hint: "Photography fallback — aistudio.google.com (optional)") {
                             SecureField("AIza…", text: $geminiKey)
                         }
                     }
@@ -62,6 +66,7 @@ struct SettingsView: View {
         calorieGoal = profile.calorieGoal
         proteinGoal = profile.proteinGoal
         anthropicKey = KeyVault.get(.anthropic) ?? ""
+        openAIKey = KeyVault.get(.openai) ?? ""
         geminiKey = KeyVault.get(.gemini) ?? ""
     }
 
@@ -72,6 +77,7 @@ struct SettingsView: View {
         profile.proteinGoal = proteinGoal
         model.store.save()
         KeyVault.set(anthropicKey, for: .anthropic)
+        KeyVault.set(openAIKey, for: .openai)
         KeyVault.set(geminiKey, for: .gemini)
         Haptics.shared.tick()
         dismiss()
