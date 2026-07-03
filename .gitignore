@@ -1,0 +1,18 @@
+# Xcode
+*.xcodeproj/
+!*.xcodeproj/project.pbxproj
+xcuserdata/
+DerivedData/
+*.xcuserstate
+*.moved-aside
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+
+# Secrets — never commit keys
+Secrets.xcconfig
+*.env
