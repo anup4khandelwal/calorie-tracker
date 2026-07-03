@@ -23,55 +23,17 @@ struct DayThreadView: View {
             DayMasthead(dayKey: dayKey)
 
             ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 22) {
-                        ForEach(messages, id: \.id) { message in
-                            Group {
-                                switch message.role {
-                                case .user:
-                                    UserBubbleView(text: message.text)
-                                case .agent:
-                                    AgentMessageView(message: message)
-                                }
-                            }
-                            .id(message.id)
-                        }
+                ZStack(alignment: .top) {
+                    scrollBody(session: session, proxy: proxy)
 
-                        if session.isBusy {
-                            LiveTurnView(session: session)
-                                .id("live-turn")
-                        }
-
-                        if let error = session.lastError {
-                            ErrorBanner(text: error)
-                        }
-
-                        Color.clear.frame(height: 1).id("thread-bottom")
-                    }
-                    .padding(.horizontal, Theme.pagePadding)
-                    .padding(.top, 6)
-                    .padding(.bottom, 12)
-                }
-                .scrollDismissesKeyboard(.interactively)
-                .defaultScrollAnchor(.bottom)
-                .onChange(of: messages.count) {
-                    withAnimation(Motion.snap) {
-                        proxy.scrollTo("thread-bottom", anchor: .bottom)
-                    }
-                }
-                .onChange(of: session.streamingText) {
-                    proxy.scrollTo("thread-bottom", anchor: .bottom)
-                }
-                .onChange(of: model.pendingScrollEntryID) { _, target in
-                    landOnEntry(target, proxy: proxy)
-                }
-                .task {
-                    // A timeline dive can set the target *before* this thread
-                    // mounts — onChange never fires then, so check on arrival
-                    // (after the zoom has mostly settled).
-                    guard model.pendingScrollEntryID != nil else { return }
-                    try? await Task.sleep(for: .milliseconds(380))
-                    landOnEntry(model.pendingScrollEntryID, proxy: proxy)
+                    // Content slips under the masthead through a short fade,
+                    // so scrolling reads as pages turning under the folio.
+                    LinearGradient(
+                        colors: [Theme.ink.opacity(0.9), Theme.ink.opacity(0)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                    .frame(height: Theme.s5)
+                    .allowsHitTesting(false)
                 }
             }
 
@@ -82,6 +44,61 @@ struct DayThreadView: View {
         }
         .onAppear {
             session.openIfNeeded()
+        }
+    }
+
+    private func scrollBody(session: AgentSession, proxy: ScrollViewProxy) -> some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: Theme.s6 - 2) {
+                ForEach(messages, id: \.id) { message in
+                    Group {
+                        switch message.role {
+                        case .user:
+                            UserBubbleView(text: message.text)
+                        case .agent:
+                            AgentMessageView(message: message)
+                        }
+                    }
+                    .id(message.id)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                }
+
+                if session.isBusy {
+                    LiveTurnView(session: session)
+                        .id("live-turn")
+                }
+
+                if let error = session.lastError {
+                    ErrorBanner(text: error)
+                }
+
+                Color.clear.frame(height: 1).id("thread-bottom")
+            }
+            .animation(Motion.arrive, value: messages.count)
+            .padding(.horizontal, Theme.pagePadding)
+            .padding(.top, Theme.s2)
+            .padding(.bottom, Theme.s3)
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .defaultScrollAnchor(.bottom)
+        .onChange(of: messages.count) {
+            withAnimation(Motion.snap) {
+                proxy.scrollTo("thread-bottom", anchor: .bottom)
+            }
+        }
+        .onChange(of: session.streamingText) {
+            proxy.scrollTo("thread-bottom", anchor: .bottom)
+        }
+        .onChange(of: model.pendingScrollEntryID) { _, target in
+            landOnEntry(target, proxy: proxy)
+        }
+        .task {
+            // A timeline dive can set the target *before* this thread
+            // mounts — onChange never fires then, so check on arrival
+            // (after the zoom has mostly settled).
+            guard model.pendingScrollEntryID != nil else { return }
+            try? await Task.sleep(for: .milliseconds(380))
+            landOnEntry(model.pendingScrollEntryID, proxy: proxy)
         }
     }
 

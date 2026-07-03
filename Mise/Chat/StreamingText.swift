@@ -31,6 +31,14 @@ struct GlyphRevealRenderer: TextRenderer, Animatable {
                 copy.opacity = local
                 copy.translateBy(x: 0, y: (1 - local) * 4)
                 copy.addFilter(.blur(radius: (1 - local) * 3))
+                // Fresh glyphs land warm — a saffron ember that cools to
+                // cream as they settle (multiply toward the accent).
+                let warmth = 1 - local
+                copy.addFilter(.colorMultiply(Color(
+                    red: 1 - 0.04 * warmth,
+                    green: 1 - 0.28 * warmth,
+                    blue: 1 - 0.62 * warmth
+                )))
             }
             copy.draw(slice)
         }
